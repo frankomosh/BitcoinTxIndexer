@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    environment:
+      POSTGRES_USER: indexer
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: btc_indexer
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  bitcoin-core:
+    image: ruimarinho/bitcoin-core:latest
+    command:
+      -printtoconsole
+      -regtest=0
+      -rpcallowip=0.0.0.0/0
+      -rpcbind=0.0.0.0
+      -rpcuser=bitcoinrpc
+      -rpcpassword=yourpassword
+      -txindex=1
+    ports:
+      - "8332:8332"
+      - "8333:8333"
+    volumes:
+      - bitcoin_data:/home/bitcoin/.bitcoin
+
+volumes:
+  postgres_data:
+  bitcoin_data:
