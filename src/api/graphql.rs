@@ -6,11 +6,10 @@ use axum::{
     extract::Extension,
     response::{Html, IntoResponse},
 };
-use chrono::{DateTime, Utc};
 
 use crate::{
     api::ApiState,
-    db::models::{BlockModel, TransactionModel, RunesTransactionModel},
+    db::models::{BlockModel, RunesTransactionModel, TransactionModel},
 };
 
 pub type AppSchema = Schema<QueryRoot, EmptyMutation, EmptySubscription>;
@@ -24,13 +23,17 @@ impl QueryRoot {
         let block = state.db.get_block_by_height(height as u64).await?;
         Ok(block.map(Block::from))
     }
-    
-    async fn transaction(&self, ctx: &Context<'_>, txid: String) -> async_graphql::Result<Option<Transaction>> {
+
+    async fn transaction(
+        &self,
+        ctx: &Context<'_>,
+        txid: String,
+    ) -> async_graphql::Result<Option<Transaction>> {
         let state = ctx.data::<ApiState>()?;
         let tx = state.db.get_transaction(&txid).await?;
         Ok(tx.map(Transaction::from))
     }
-    
+
     async fn runes_transactions(
         &self,
         ctx: &Context<'_>,
@@ -40,15 +43,15 @@ impl QueryRoot {
         let state = ctx.data::<ApiState>()?;
         let limit = limit.unwrap_or(50) as i64;
         let offset = offset.unwrap_or(0) as i64;
-        
+
         let txs = state.db.get_runes_transactions(limit, offset).await?;
         Ok(txs.into_iter().map(RunesTransaction::from).collect())
     }
-    
+
     async fn stats(&self, ctx: &Context<'_>) -> async_graphql::Result<Stats> {
         let state = ctx.data::<ApiState>()?;
         let last_block = state.db.get_last_block_height().await?;
-        
+
         Ok(Stats {
             last_indexed_block: last_block.map(|h| h as i64),
             total_transactions: 0,
@@ -62,7 +65,7 @@ struct Block {
     height: i64,
     hash: String,
     prev_hash: String,
-    timestamp: DateTime<Utc>,
+    timestamp: String,
     merkle_root: String,
 }
 
@@ -72,7 +75,7 @@ impl From<BlockModel> for Block {
             height: model.height,
             hash: model.hash,
             prev_hash: model.prev_hash,
-            timestamp: model.timestamp,
+            timestamp: model.timestamp.to_rfc3339(),
             merkle_root: model.merkle_root,
         }
     }
@@ -88,7 +91,7 @@ struct Transaction {
     size: i32,
     weight: i32,
     fee: Option<i64>,
-    timestamp: DateTime<Utc>,
+    timestamp: String,
 }
 
 impl From<TransactionModel> for Transaction {
@@ -102,7 +105,7 @@ impl From<TransactionModel> for Transaction {
             size: model.size,
             weight: model.weight,
             fee: model.fee,
-            timestamp: model.timestamp,
+            timestamp: model.timestamp.to_rfc3339(),
         }
     }
 }
@@ -118,7 +121,7 @@ struct RunesTransaction {
     from_address: Option<String>,
     to_address: Option<String>,
     metadata: Option<serde_json::Value>,
-    timestamp: DateTime<Utc>,
+    timestamp: String,
 }
 
 impl From<RunesTransactionModel> for RunesTransaction {
@@ -133,7 +136,7 @@ impl From<RunesTransactionModel> for RunesTransaction {
             from_address: model.from_address,
             to_address: model.to_address,
             metadata: model.metadata,
-            timestamp: model.timestamp,
+            timestamp: model.timestamp.to_rfc3339(),
         }
     }
 }
@@ -152,7 +155,7 @@ pub async fn graphql_handler(
     let schema = Schema::build(QueryRoot, EmptyMutation, EmptySubscription)
         .data(state)
         .finish();
-    
+
     schema.execute(req.into_inner()).await.into()
 }
 

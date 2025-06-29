@@ -1,7 +1,7 @@
 use axum::{
-    extract::{Path, Query, Extension},
-    response::Json,
+    extract::{Extension, Path, Query},
     http::StatusCode,
+    response::Json,
 };
 use serde::{Deserialize, Serialize};
 use tracing::error;
@@ -65,7 +65,11 @@ pub async fn get_runes_transactions(
     Query(params): Query<PaginationParams>,
     Extension(state): Extension<ApiState>,
 ) -> Result<Json<serde_json::Value>, StatusCode> {
-    match state.db.get_runes_transactions(params.limit, params.offset).await {
+    match state
+        .db
+        .get_runes_transactions(params.limit, params.offset)
+        .await
+    {
         Ok(txs) => Ok(Json(serde_json::json!({
             "transactions": txs,
             "pagination": {
@@ -88,16 +92,17 @@ pub struct Stats {
     pub total_runes_transactions: i64,
 }
 
-pub async fn get_stats(
-    Extension(state): Extension<ApiState>,
-) -> Result<Json<Stats>, StatusCode> {
+pub async fn get_stats(Extension(state): Extension<ApiState>) -> Result<Json<Stats>, StatusCode> {
     // In production, these would be actual queries
-    let last_block = state.db.get_last_block_height().await
+    let last_block = state
+        .db
+        .get_last_block_height()
+        .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    
+
     Ok(Json(Stats {
         last_indexed_block: last_block,
-        total_transactions: 0, // Implement count query
+        total_transactions: 0,       // Implement count query
         total_runes_transactions: 0, // Implement count query
     }))
 }

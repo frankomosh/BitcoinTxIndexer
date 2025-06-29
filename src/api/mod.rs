@@ -1,13 +1,9 @@
-pub mod rest;
 pub mod graphql;
+pub mod rest;
 
-use axum::{
-    Router,
-    routing::get,
-    Extension,
-};
+use axum::{routing::get, Extension, Router};
 use std::sync::Arc;
-use tower_http::cors::{CorsLayer, Any};
+use tower_http::cors::{Any, CorsLayer};
 
 use crate::{config::Config, db::Database};
 
@@ -22,7 +18,7 @@ pub fn create_api_router(state: ApiState) -> Router {
         .allow_origin(Any)
         .allow_methods(Any)
         .allow_headers(Any);
-    
+
     Router::new()
         // REST endpoints
         .route("/health", get(rest::health))
@@ -30,10 +26,11 @@ pub fn create_api_router(state: ApiState) -> Router {
         .route("/transactions/:txid", get(rest::get_transaction))
         .route("/runes/transactions", get(rest::get_runes_transactions))
         .route("/stats", get(rest::get_stats))
-        
         // GraphQL endpoint
-        .route("/graphql", get(graphql::graphql_playground).post(graphql::graphql_handler))
-        
+        .route(
+            "/graphql",
+            get(graphql::graphql_playground).post(graphql::graphql_handler),
+        )
         // Add state
         .layer(Extension(state))
         .layer(cors)

@@ -9,52 +9,49 @@ use std::sync::Arc;
 use tokio::signal;
 use tracing::{info, error};
 
+// Use Server from Hyper 0.14 as it is compatible with Axum 0.6
+use hyper::Server;
+
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Initialize tracing
     tracing_subscriber::fmt::init();
-    
-    // Load configuration
+
     let config = Config::from_env()?;
     info!("Configuration loaded");
-    
-    // Initialize database
+
     let db = Database::new(&config.database_url).await?;
     db.run_migrations().await?;
     info!("Database initialized");
-    
-    // Create shared state
+
     let db = Arc::new(db);
     let config = Arc::new(config);
-    
-    // Start the indexer
+
     let indexer = BitcoinIndexer::new(db.clone(), config.clone()).await?;
     let indexer_handle = tokio::spawn(async move {
         if let Err(e) = indexer.start().await {
             error!("Indexer error: {}", e);
         }
     });
-    
-    // Start the API server
+
     let api_state = ApiState {
         db: db.clone(),
         config: config.clone(),
     };
-    
+
     let app = create_api_router(api_state);
-    let addr = format!("{}:{}", config.api_host, config.api_port);
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    
+    let addr = format!("{}:{}", config.api_host, config.api_port).parse()?;
+
     info!("API server listening on {}", addr);
-    
-    axum::serve(listener, app)
+
+    // Works with Axum 0.6 + Hyper 0.14
+    Server::bind(&addr)
+        .serve(app.into_make_service())
         .with_graceful_shutdown(shutdown_signal())
         .await?;
-    
-    // Clean shutdown
+
     indexer_handle.abort();
     info!("Shutting down gracefully");
-    
+
     Ok(())
 }
 

@@ -1,5 +1,5 @@
-use serde::Deserialize;
 use config::{Config as ConfigBuilder, ConfigError, Environment};
+use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
@@ -8,14 +8,14 @@ pub struct Config {
     pub bitcoin_rpc_user: String,
     pub bitcoin_rpc_pass: String,
     pub bitcoin_network: String,
-    
+
     // Database
     pub database_url: String,
-    
+
     // API
     pub api_host: String,
     pub api_port: u16,
-    
+
     // Indexer
     pub indexer_start_height: u64,
     pub indexer_batch_size: usize,
@@ -25,11 +25,11 @@ pub struct Config {
 impl Config {
     pub fn from_env() -> Result<Self, ConfigError> {
         dotenv::dotenv().ok();
-        
+
         let config = ConfigBuilder::builder()
             .add_source(Environment::default())
             .build()?;
-        
+
         config.try_deserialize()
     }
 }
