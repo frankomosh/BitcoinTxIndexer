@@ -1,6 +1,6 @@
 # Starknet Bitcoin Indexer
 
-A BtcTx indexer with support for Runes protocol and Starknet bridge operations.
+A BtcTx indexer with support for Runes and Starknet bridge operations.
 
 ## Features
 
