@@ -66,7 +66,7 @@ query {
 ## Architecture
 
 - Bitcoin Indexer: Should connect to Bitcoin Core node and processes blocks
-- Runes Processor: Should detects and parse Runes protocol transactions
+- Runes Processor: Should detect and parse Runes transactions
 - Database: PostgreSQL with TimescaleDB for efficient time-series storage
 - API Layer: REST and GraphQL endpoints for data access
 
