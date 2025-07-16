@@ -77,7 +77,9 @@ query {
  - Horizontal scaling with multiple indexer instances
  - Prometheus metrics integration
 
-Note: This is still experimental and should still not be used in production yet!
+## Note
+
+This is still experimental and should still not be used in production yet!
 
 ## License
 
